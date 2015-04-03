@@ -2,14 +2,22 @@ from collections import deque
 
 """ 2 power of n. """
 def twoToTheN(n):
-  result = 1
-
-  """ do the bit shift until meet goal. """
-  while n > 0:
-    result = result << 1
-    n -= 1
-
-  return result
+  """
+  seems like it doesn't allow to use `result << n`,
+  because in official python documents it equal to `pow(2, n)`
+  otherwise it will be extremely easy.
+  """
+  if n == 0:
+    return 1
+  if n == 1:
+    return 2
+  
+  if n%2 == 0:
+    result = twoToTheN(n/2)
+    return result * result
+  else:
+    result = twoToTheN((n-1)/2)
+    return 2 * result * result
 
 """ Calculate the mean of a list L. """
 def mean(L):

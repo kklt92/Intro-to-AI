@@ -39,11 +39,11 @@ def bfs(tree, elem):
   queue.append(tree)
   while len(queue) > 0:
     node = queue.popleft()
-    if isinstance(node, int):
+    if isinstance(node, int): # if the node is int, then print it
       print node
       if node == elem:
         return True
-    else:
+    else:   # if node is not int, then add everything into queue
       for i in range (0, len(node)):
         queue.append(node[i])
   
@@ -57,7 +57,8 @@ def dfs(tree, elem):
 
   stack = []
   stack.append(tree)
-  while len(stack) > 0:
+  while len(stack) > 0: 
+    """ use first in last out to do dfs """
     node = stack.pop()
     if isinstance(node, int):
       print node
@@ -65,28 +66,44 @@ def dfs(tree, elem):
         return True
     else:
       print node[0]
-      if node[0] == elem:
+      if node[0] == elem:   # print first element in the list
         return True
-      for i in range (1, len(node)):
+      for i in range (1, len(node)):  #add everything else into stack
         stack.append(node[i])
 
   return False
 
+
+""" 
+" Tic Tac Toe board game
+" 
+"""
 class TTTBoard:
+  """
+  " initial with clear board 
+  """
   def __init__(self):
     self.board = []
     for i in range(0, 9):
       self.board.append("*")
-
+  
+  """
+  " Print board as 3 * 3 matrix.
+  """
   def __str__(self):
     string = ""
     for i in range(0, 3):
       for j in range(0, 3):
         string = string + self.board[i * 3 + j] + " "  
-      string = string + "\n"
+      string = string + "\n"    # add a \n to make a new line
 
     return string
 
+  """
+  " set the pos to be that player.
+  " Check if the pos is outbound or this pos is full.
+  " Returns True if the move was made and False if not 
+  """
   def makeMove(self, player, pos):
     if pos > 8 or pos < 0:
       return False
@@ -96,6 +113,9 @@ class TTTBoard:
     self.board[pos] = player
     return True
 
+  """
+  " Returns True if player has won the game, and False if not.
+  """
   def hasWon(self, player):
     data = self.board
     if data[0] == player and data[1] == player and data[2] == player:
@@ -118,6 +138,10 @@ class TTTBoard:
       return False
 
 
+  """
+  " Returns True if someone has won or if the board is full, 
+  " False otherwise
+  """
   def gameOver(self):
     if self.board.hasWon("X") or self.board.hasWon("O"):
       return True
@@ -127,6 +151,9 @@ class TTTBoard:
 
     return True
 
+  """
+  " Clears the board to reset the game
+  """
   def clear(self):
     for i in range(0, len(self.board)):
       self.board[i] = "*"

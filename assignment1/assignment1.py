@@ -151,7 +151,7 @@ class TTTBoard:
   " False otherwise
   """
   def gameOver(self):
-    if self.board.hasWon("X") or self.board.hasWon("O"):
+    if self.hasWon("X") or self.hasWon("O"):
       return True
     for i in range (0, len(self.board)):
       if self.board[i] == "*":

@@ -12,6 +12,7 @@ from decimal import *
 from copy import *
 from MancalaBoard import *
 import time     #TODO: delete after test
+import math
 
 # a constant
 INFINITY = 1.0e400
@@ -205,9 +206,104 @@ class Player:
                 return score
             b = min(b, score)
         return score
+
+
+    def alphaBetaMoveCustom(self, board, ply):
+        """ Choose a move with alpha beta pruning.  Returns (score, move) """
+        #returns the score adn the associated moved
+
+        a = -INFINITY
+        b = INFINITY
+        move = -1
+        score = -INFINITY
+        turn = self
+        for m in board.legalMoves(self):
+            #for each legal move
+            if ply == 0:
+                #if we're at ply 0, we need to call our eval function & return
+                return (self.score(board), m)
+            if board.gameOver():
+                return (-1, -1)  # Can't make a move, the game is over
+            nb = deepcopy(board)
+            #make a new board
+            cont = nb.makeMove(self, m)
+            if cont:
+                num = Player(self.num, self.type, self.ply)
+                s = num.abMaxValueCustom(nb, ply-1, turn, a, b)                
+            else:
+                #try the move
+                opp = Player(self.opp, self.type, self.ply)
+                s = opp.abMinValueCustom(nb, ply-1, turn, a, b)
+                #and see what the opponent would do next
+            if s > score:
+                #if the result is better than our best score so far, save that move,score
+                move = m
+                score = s
+            if score >= b:
+                return score, move
+            a = max(a, score)
+        #return the best score and move so far
+        return score, move
+
+    def abMaxValueCustom(self, board, ply, turn, a, b): 
+        if board.gameOver():
+            return turn.score(board)
+        score = -INFINITY
+        for m in board.legalMoves(self):
+            if ply == 0:
+                #print "turn.score(board) in max value is: " + str(turn.score(board))
+                return turn.score(board)
+            # make a new player to play the other side
+            opponent = Player(self.opp, self.type, self.ply)
+            # Copy the board so that we don't ruin it
+            nextBoard = deepcopy(board)
+            cont = nextBoard.makeMove(self, m)
+            if cont:
+                num = Player(self.num, self.type, self.ply)
+                s = num.abMaxValueCustom(nextBoard, ply-1, turn, a, b)
+            else:
+                s = opponent.abMinValueCustom(nextBoard, ply-1, turn, a, b)
+            #print "s in maxValue is: " + str(s)
+            if s > score:
+                score = s
+            if score >= b:
+                return s
+            a = max(a, score)
+        return score
+
+
+    def abMinValueCustom(self, board, ply, turn, a, b):
+        if board.gameOver():
+            return turn.score(board)
+        score = INFINITY
+        for m in board.legalMoves(self):
+            if ply == 0:
+                #print "turn.score(board) in min Value is: " + str(turn.score(board))
+                return turn.score(board)
+            # make a new player to play the other side
+            opponent = Player(self.opp, self.type, self.ply)
+            # Copy the board so that we don't ruin it
+            nextBoard = deepcopy(board)
+            cont = nextBoard.makeMove(self, m)
+            if cont:
+                num = Player(self.num, self.type, self.ply)
+                s = num.abMinValueCustom(nextBoard, ply-1, turn, a, b)
+            else:
+                s = opponent.abMaxValueCustom(nextBoard, ply-1, turn, a, b)
+            #print "s in minValue is: " + str(s)
+            if s < score:
+                score = s
+            if score <= a:
+                return score
+            b = min(b, score)
+        return score
+                
+
                 
     def chooseMove(self, board):
         """ Returns the next move that this player wants to make """
+        print "num: scorecup: ", board.scoreCups[self.num-1]
+        print "opp: scorecup: ", board.scoreCups[self.opp-1]
         if self.type == self.HUMAN:
             move = input("Please enter your move:")
             while not board.legalMove(self, move):
@@ -235,8 +331,13 @@ class Player:
             # function.  You may use whatever search algorithm and scoring
             # algorithm you like.  Remember that your player must make
             # each move in about 10 seconds or less.
-            print "Custom player not yet implemented"
-            return -1
+            now = time.time()
+            val, move = self.alphaBetaMoveCustom(board, self.ply)
+            stop = time.time() - now
+            print "chose move", move, " with value", val
+            print "Using time: %.2f" %  stop
+
+            return move
         else:
             print "Unknown player type"
             return -1
@@ -256,3 +357,12 @@ class MancalaPlayer(Player):
 
         return result
         
+class wml431(Player):
+    """ Custom player """
+
+    def score(self, board):
+        result = math.pow(board.scoreCups[self.num - 1], 2) 
+        - math.pow(board.scoreCups[self.opp - 1], 2)
+        return result
+
+    

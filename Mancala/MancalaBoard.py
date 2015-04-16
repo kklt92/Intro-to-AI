@@ -158,6 +158,7 @@ class MancalaBoard:
             again = True
             while again:
                 print self
+                print "Palyer", currPlayer, "' turn"
                 move = currPlayer.chooseMove( self )
                 while not(self.legalMove(currPlayer, move)):
                     print move, " is not legal"

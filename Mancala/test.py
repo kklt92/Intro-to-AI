@@ -5,4 +5,4 @@ import pdb
 
 execfile("MancalaBoard.py")
 mb = MancalaBoard()
-pdb.run(mb.hostGame(wml431(1, Player.MINIMAX, 10), wml431(2, Player.ABPRUNE, 9)))
+mb.hostGame(MancalaPlayer(1, Player.CUSTOM, 10), wml431(2, Player.CUSTOM, 9))

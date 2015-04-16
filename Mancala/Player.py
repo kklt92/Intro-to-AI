@@ -361,8 +361,22 @@ class wml431(Player):
     """ Custom player """
 
     def score(self, board):
-        result = math.pow(board.scoreCups[self.num - 1], 2) 
-        - math.pow(board.scoreCups[self.opp - 1], 2)
+        numSum = 0
+        oppSum = 0
+        if self.num == 1:
+            numCups = board.P1Cups
+            oppCups = board.P2Cups
+        else:
+            numCups = board.P2Cups
+            oppCups = board.P1Cups
+        for elem in numCups:
+            numSum += elem
+        for elem in oppCups:
+            oppSum += elem
+
+        result = board.scoreCups[self.num - 1] - board.scoreCups[self.opp - 1]
+        result += numSum - oppSum
+        result += 25 - board.scoreCups[self.opp - 1]
         return result
 
     

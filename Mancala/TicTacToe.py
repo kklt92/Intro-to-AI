@@ -1,3 +1,5 @@
+from Player import *
+
 
 class TTTBoard:
     def __init__(self):

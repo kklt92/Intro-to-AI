@@ -11,7 +11,7 @@ from random import *
 from decimal import *
 from copy import *
 from MancalaBoard import *
-import time     #TODO: delete after test
+import time     
 import math
 
 # a constant
@@ -302,8 +302,8 @@ class Player:
                 
     def chooseMove(self, board):
         """ Returns the next move that this player wants to make """
-        print "num: scorecup: ", board.scoreCups[self.num-1]
-        print "opp: scorecup: ", board.scoreCups[self.opp-1]
+        #print "num: scorecup: ", board.scoreCups[self.num-1]
+        #print "opp: scorecup: ", board.scoreCups[self.opp-1]
         if self.type == self.HUMAN:
             move = input("Please enter your move:")
             while not board.legalMove(self, move):
@@ -326,16 +326,19 @@ class Player:
             print "Using time: %.2f" %  stop
             return move
         elif self.type == self.CUSTOM:
-            # TODO: Implement a custom player
-            # You should fill this in with a call to your best move choosing
-            # function.  You may use whatever search algorithm and scoring
-            # algorithm you like.  Remember that your player must make
-            # each move in about 10 seconds or less.
             now = time.time()
-            val, move = self.alphaBetaMoveCustom(board, self.ply)
+            if(self.num == 1 and self.counter == 0):
+                val = 99
+                move = 3
+            elif(self.num == 1 and self.counter == 1):
+                val = 99
+                move = 6
+            else:
+                val, move = self.alphaBetaMoveCustom(board, 10)
             stop = time.time() - now
-            print "chose move", move, " with value", val
-            print "Using time: %.2f" %  stop
+            #print "chose move", move, " with value", val
+            #print "Using time: %.2f" %  stop
+            self.counter +=1
 
             return move
         else:
@@ -357,9 +360,10 @@ class MancalaPlayer(Player):
 
         return result
         
-class wml431(Player):
+class MancalaAdvance(Player):
     """ Custom player """
 
+    counter = 0
     def score(self, board):
         numSum = 0
         oppSum = 0

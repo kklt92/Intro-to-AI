@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import struct, string, math, copy
+import time
 
 class SudokuBoard:
     """This will be the sudoku board game object your player will manipulate."""
@@ -117,43 +118,60 @@ def solve(initial_board, forward_checking = False, MRV = False, MCV = False,
     """Takes an initial SudokuBoard and solves it using back tracking, and zero
     or more of the heuristics and constraint propagation methods (determined by
     arguments). Returns the resulting board solution. """
-    result_board, result = backtrack(initial_board, MCV)
+    start = time.time()
+    result_board, result = backtrack(initial_board, MRV,  MCV)
+    print "Using time: ", time.time() - start
     return result_board
 
-def backtrack(board, MCV):
+def backtrack(board, MRV, MCV):
   if is_complete(board) == True:
     return board, True
-  next_row, next_col = nextEmptyPosition(board, MCV)
+  next_row, next_col = nextEmptyPosition(board, MRV, MCV)
   for value in possible_value(next_row, next_col, board):
     new_board = copy.deepcopy(board)
     new_board.set_value(next_row, next_col, value)
-    temp_board, result  = backtrack(new_board, MCV)
+    temp_board, result  = backtrack(new_board,MRV,  MCV)
     if result == True:
       return temp_board, True
 
   return board, False
 
-def nextEmptyPosition(board, MCV):
+def nextEmptyPosition(board, MRV, MCV):
   BoardArray = board.CurrentGameBoard
   size = len(BoardArray)
   subsquare = int(math.sqrt(size))
 
-  if(MCV==False):
+  min_remain = 10
+  prev_min = min_remain
+  if(MCV==False and MRV == False):
     for row in range(size):
       for col in range(size):
         if BoardArray[row][col]==0:
           return row, col
-  else:
+  elif(MRV == True):
     row = 0
     col = 0
-    maxDegree = -1
     for i in range(size):
       for j in range(size):
         if BoardArray[i][j] == 0:
-          if(degree(i, j, board) > maxDegree):
+          if(len(possible_value(i, j, board)) < min_remain):
             row = i
             col = j
-            maxDegree = degree(i,j, board)
+            prev_min = min_remain
+            min_remain = len(possible_value(i,j, board))
+
+  if prev_min == min_remain:
+    if MCV == True:
+      row = 0
+      col = 0
+      maxDegree = -1
+      for i in range(size):
+        for j in range(size):
+          if BoardArray[i][j] == 0:
+            if(degree(i, j, board) > maxDegree):
+              row = i
+              col = j
+              maxDegree = degree(i,j, board)
 
   return row, col
 

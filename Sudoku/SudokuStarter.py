@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import struct, string, math
+import struct, string, math, copy
 
 class SudokuBoard:
     """This will be the sudoku board game object your player will manipulate."""
@@ -117,7 +117,101 @@ def solve(initial_board, forward_checking = False, MRV = False, MCV = False,
     """Takes an initial SudokuBoard and solves it using back tracking, and zero
     or more of the heuristics and constraint propagation methods (determined by
     arguments). Returns the resulting board solution. """
-    print "Your code will solve the initial_board here!"
-    print "Remember to return the final board (the SudokuBoard object)."
-    print "I'm simply returning initial_board for demonstration purposes."
-    return initial_board
+    result_board, result = backtrack(initial_board, MCV)
+    return result_board
+
+def backtrack(board, MCV):
+  if is_complete(board) == True:
+    return board, True
+  next_row, next_col = nextEmptyPosition(board, MCV)
+  for value in possible_value(next_row, next_col, board):
+    new_board = copy.deepcopy(board)
+    new_board.set_value(next_row, next_col, value)
+    temp_board, result  = backtrack(new_board, MCV)
+    if result == True:
+      return temp_board, True
+
+  return board, False
+
+def nextEmptyPosition(board, MCV):
+  BoardArray = board.CurrentGameBoard
+  size = len(BoardArray)
+  subsquare = int(math.sqrt(size))
+
+  if(MCV==False):
+    for row in range(size):
+      for col in range(size):
+        if BoardArray[row][col]==0:
+          return row, col
+  else:
+    row = 0
+    col = 0
+    maxDegree = -1
+    for i in range(size):
+      for j in range(size):
+        if BoardArray[i][j] == 0:
+          if(degree(i, j, board) > maxDegree):
+            row = i
+            col = j
+            maxDegree = degree(i,j, board)
+
+  return row, col
+
+def degree(row, col, board):
+  BoardArray = board.CurrentGameBoard
+  size = len(BoardArray)
+  subsquare = int(math.sqrt(size))
+
+  count = 0
+  for i in range(size):
+    if (BoardArray[row][i] != 0): 
+      count += 1
+    if (BoardArray[i][col] != 0):
+      count += 1
+
+
+  SquareRow = row // subsquare
+  SquareCol = col // subsquare
+  for i in range(subsquare):
+    for j in range(subsquare):
+      if(BoardArray[SquareRow*subsquare+i][SquareCol*subsquare+j]
+          != 0):
+        count += 1
+
+  return count
+
+
+
+def possible_value(row, col, board):
+  BoardArray = board.CurrentGameBoard
+  size = len(BoardArray)
+  subsquare = int(math.sqrt(size))
+
+  result = []
+  constraint = []
+  for i in range(size):
+    constraint.append(i+1)
+
+  temp = copy.deepcopy(constraint)
+  for i in range(size):
+    if BoardArray[row][i] in temp:
+      temp.remove(BoardArray[row][i])
+    if BoardArray[i][col] in temp:
+      temp.remove(BoardArray[i][col])
+
+  SquareRow = row // subsquare
+  SquareCol = col // subsquare
+  for i in range(subsquare):
+    for j in range(subsquare):
+      if(BoardArray[SquareRow*subsquare+i][SquareCol*subsquare+j]
+          in temp):
+        temp.remove(BoardArray[SquareRow*subsquare+i][SquareCol*subsquare+j])
+
+  result = result + temp
+
+  return result
+
+
+
+
+

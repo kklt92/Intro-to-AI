@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import struct, string, math, copy
-import time
 
 class SudokuBoard:
     """This will be the sudoku board game object your player will manipulate."""
@@ -10,13 +9,13 @@ class SudokuBoard:
       self.BoardSize = size #the size of the board
       self.CurrentGameBoard= board #the current state of the game board
       self.PossibleValue =  [ [ 0 for i in range(self.BoardSize) ] for j in range(self.BoardSize) ]
-      print "init new possibleTable"
       for i in range(size):
         for j in range(size):
           if self.CurrentGameBoard[i][j] == 0:
             self.PossibleValue[i][j] = possible_valueHelper(i, j, self, False) 
           else:
             self.PossibleValue[i][j] = []
+      self.counter = 0
 
     def set_value(self, row, col, value):
         """This function will create a new sudoku board object with the input
@@ -127,9 +126,7 @@ def solve(initial_board, forward_checking = False, MRV = False, MCV = False,
     """Takes an initial SudokuBoard and solves it using back tracking, and zero
     or more of the heuristics and constraint propagation methods (determined by
     arguments). Returns the resulting board solution. """
-    start = time.time()
     result_board, result = backtrack(initial_board,forward_checking,  MRV,  MCV, LCV)
-    print "Using time: ", time.time() - start
     return result_board
 
 def backtrack(board, forward_checking, MRV, MCV, LCV):
@@ -139,6 +136,7 @@ def backtrack(board, forward_checking, MRV, MCV, LCV):
   for value in possible_value(next_row, next_col, board, LCV):
     new_board = copy.deepcopy(board)
     new_board.set_value(next_row, next_col, value)
+    new_board.counter += 1
     pvTableUpdate(next_row, next_col, new_board, value)
     if forward_checking == True:
       forward_check(next_row, next_col, value, new_board)
@@ -164,6 +162,7 @@ def forward_check(row, col, value, board):
           changed = 1
           BoardArray[i][j] = pValue[i][j][0]
           pvTableUpdate(i, j, board, pValue[i][j][0])
+          board.counter += 1
         elif (len(pValue[i][j]) == 0 and BoardArray[i][j] == 0):
           return False
 

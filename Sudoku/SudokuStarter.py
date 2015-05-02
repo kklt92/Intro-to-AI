@@ -9,6 +9,14 @@ class SudokuBoard:
       """the constructor for the SudokuBoard"""
       self.BoardSize = size #the size of the board
       self.CurrentGameBoard= board #the current state of the game board
+      self.PossibleValue =  [ [ 0 for i in range(self.BoardSize) ] for j in range(self.BoardSize) ]
+      print "init new possibleTable"
+      for i in range(size):
+        for j in range(size):
+          if self.CurrentGameBoard[i][j] == 0:
+            self.PossibleValue[i][j] = possible_valueHelper(i, j, self, False) 
+          else:
+            self.PossibleValue[i][j] = []
 
     def set_value(self, row, col, value):
         """This function will create a new sudoku board object with the input
@@ -17,6 +25,7 @@ class SudokuBoard:
         #add the value to the appropriate position on the board
         self.CurrentGameBoard[row][col]=value
         #return a new board of the same size with the value added
+        return
         return SudokuBoard(self.BoardSize, self.CurrentGameBoard)
                                                                   
                                                                   
@@ -119,22 +128,48 @@ def solve(initial_board, forward_checking = False, MRV = False, MCV = False,
     or more of the heuristics and constraint propagation methods (determined by
     arguments). Returns the resulting board solution. """
     start = time.time()
-    result_board, result = backtrack(initial_board, MRV,  MCV)
+    result_board, result = backtrack(initial_board,forward_checking,  MRV,  MCV, LCV)
     print "Using time: ", time.time() - start
     return result_board
 
-def backtrack(board, MRV, MCV):
+def backtrack(board, forward_checking, MRV, MCV, LCV):
   if is_complete(board) == True:
     return board, True
   next_row, next_col = nextEmptyPosition(board, MRV, MCV)
-  for value in possible_value(next_row, next_col, board):
+  for value in possible_value(next_row, next_col, board, LCV):
     new_board = copy.deepcopy(board)
     new_board.set_value(next_row, next_col, value)
-    temp_board, result  = backtrack(new_board,MRV,  MCV)
+    pvTableUpdate(next_row, next_col, new_board, value)
+    if forward_checking == True:
+      forward_check(next_row, next_col, value, new_board)
+    temp_board, result  = backtrack(new_board,forward_checking,MRV,  MCV, LCV)
     if result == True:
       return temp_board, True
 
   return board, False
+
+def forward_check(row, col, value, board):
+  BoardArray = board.CurrentGameBoard
+  size = len(BoardArray)
+  subsquare = int(math.sqrt(size))
+  pValue = board.PossibleValue
+
+  changed = 1
+  
+  while changed == 1:
+    changed = 0
+    for i in range(size):
+      for j in range(size):
+        if (len(pValue[i][j]) == 1  and BoardArray[i][j] == 0):
+          changed = 1
+          BoardArray[i][j] = pValue[i][j][0]
+          pvTableUpdate(i, j, board, pValue[i][j][0])
+        elif (len(pValue[i][j]) == 0 and BoardArray[i][j] == 0):
+          return False
+
+  return True
+
+    
 
 def nextEmptyPosition(board, MRV, MCV):
   BoardArray = board.CurrentGameBoard
@@ -154,11 +189,11 @@ def nextEmptyPosition(board, MRV, MCV):
     for i in range(size):
       for j in range(size):
         if BoardArray[i][j] == 0:
-          if(len(possible_value(i, j, board)) < min_remain):
+          if(len(possible_value(i, j, board, False)) < min_remain):
             row = i
             col = j
             prev_min = min_remain
-            min_remain = len(possible_value(i,j, board))
+            min_remain = len(possible_value(i,j, board, False))
 
   if prev_min == min_remain:
     if MCV == True:
@@ -187,7 +222,6 @@ def degree(row, col, board):
     if (BoardArray[i][col] != 0):
       count += 1
 
-
   SquareRow = row // subsquare
   SquareCol = col // subsquare
   for i in range(subsquare):
@@ -198,9 +232,11 @@ def degree(row, col, board):
 
   return count
 
+def possible_value(row, col, board, LCV):
+  return board.PossibleValue[row][col]
 
 
-def possible_value(row, col, board):
+def possible_valueHelper(row, col, board, LCV):
   BoardArray = board.CurrentGameBoard
   size = len(BoardArray)
   subsquare = int(math.sqrt(size))
@@ -226,8 +262,78 @@ def possible_value(row, col, board):
         temp.remove(BoardArray[SquareRow*subsquare+i][SquareCol*subsquare+j])
 
   result = result + temp
+  if LCV == True:
+    re_order_value(row, col, board, result)
 
   return result
+
+def pvTableUpdate(row, col, board, del_value):
+  BoardArray = board.CurrentGameBoard
+  size = len(BoardArray)
+  subsquare = int(math.sqrt(size))
+  pValue = board.PossibleValue
+
+
+  for i in range(size):
+    if del_value in pValue[row][i]:
+      pValue[row][i].remove(del_value)
+    if del_value in pValue[i][col]:
+      pValue[i][col].remove(del_value)
+
+
+  SquareRow = row // subsquare
+  SquareCol = col // subsquare
+  for i in range(subsquare):
+    for j in range(subsquare):
+      if(del_value in pValue[SquareRow*subsquare+i][SquareCol*subsquare+j]):
+        pValue[SquareRow*subsquare+i][SquareCol*subsquare+j].remove(del_value)
+
+  
+  
+
+
+
+
+
+
+def re_order_value(row, col, board, l):
+  if len(l) == 0:
+    return
+  index_list = []
+  result = []
+  BoardArray = board.CurrentGameBoard
+  size = len(BoardArray)
+  subsquare = int(math.sqrt(size))
+  
+  for i in range(len(l)):
+    index_list.append(0)
+
+  for i in range(size):
+    if (BoardArray[row][i] == 0): 
+      c = list(set(l) - (set(l) - set(possible_value(row,i,board, False)))) 
+      for x in c:
+        index_list[l.index(x)] += 1
+    if (BoardArray[i][col] == 0): 
+      c = list(set(l) - (set(l) - set(possible_value(i, col, board, False)))) 
+      for x in c:
+        index_list[l.index(x)] += 1
+
+  SquareRow = row // subsquare
+  SquareCol = col // subsquare
+  for i in range(subsquare):
+    for j in range(subsquare):
+      if(BoardArray[SquareRow*subsquare+i][SquareCol*subsquare+j] == 0):
+        c = list(set(l) - (set(l) - set(possible_value(SquareRow*subsquare+i, SquareCol*subsquare+j, board, False))))
+        for x in c:
+          index_list[l.index(x)] += 1
+
+  sort_list = copy.deepcopy(index_list)
+  sort_list.sort()
+  for i in range(len(sort_list)):
+    temp = l[index_list.index(sort_list[i])]
+    result.append(temp)
+
+  l = result
 
 
 

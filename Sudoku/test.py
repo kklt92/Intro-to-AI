@@ -13,9 +13,9 @@ def main(argv):
 
 def Test(filename):
   forward_check = False
-  MCV = False
+  MCV = True
   MRV = False
-  LCV = False
+  LCV = True
   print "---------------------------------"
   print "File: ", filename
   #for i in range(4):
@@ -27,7 +27,6 @@ def Test(filename):
   print "Using time: %.4fs" %(time.time() - start)
   #fb.print_board()
   print "Complete: ", is_complete(fb)
-  print "Counter: ", fb.counter
   
   
 

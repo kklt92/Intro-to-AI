@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import struct, string, math, copy
 
+counter = 0
+
 class SudokuBoard:
     """This will be the sudoku board game object your player will manipulate."""
   
@@ -15,7 +17,6 @@ class SudokuBoard:
             self.PossibleValue[i][j] = possible_valueHelper(i, j, self, False) 
           else:
             self.PossibleValue[i][j] = []
-      self.counter = 0
 
     def set_value(self, row, col, value):
         """This function will create a new sudoku board object with the input
@@ -126,20 +127,46 @@ def solve(initial_board, forward_checking = False, MRV = False, MCV = False,
     """Takes an initial SudokuBoard and solves it using back tracking, and zero
     or more of the heuristics and constraint propagation methods (determined by
     arguments). Returns the resulting board solution. """
+    init_count()
     result_board, result = backtrack(initial_board,forward_checking,  MRV,  MCV, LCV)
+    print "Counter: ", counter
     return result_board
 
+def init_count():
+  """initial the global variable counter to be 0"""
+  global counter
+  counter = 0
+def count():
+  """ add one on global variable counter. """
+  global counter
+  counter += 1
+
 def backtrack(board, forward_checking, MRV, MCV, LCV):
+  """ calculate the correct board."""
+  #terminate condition.
   if is_complete(board) == True:
     return board, True
+
+  #get the next empty position
   next_row, next_col = nextEmptyPosition(board, MRV, MCV)
+
+  #loop  all the possible value of this position
   for value in possible_value(next_row, next_col, board, LCV):
+    #deepcopy a new board 
     new_board = copy.deepcopy(board)
     new_board.set_value(next_row, next_col, value)
-    new_board.counter += 1
+    
+    #counter++
+    count()
+
+    #update the possible value table 
     pvTableUpdate(next_row, next_col, new_board, value)
+
+    #if forward_checking is true, then do forward check
     if forward_checking == True:
       forward_check(next_row, next_col, value, new_board)
+
+    #recursive the backtrack
     temp_board, result  = backtrack(new_board,forward_checking,MRV,  MCV, LCV)
     if result == True:
       return temp_board, True
@@ -147,6 +174,12 @@ def backtrack(board, forward_checking, MRV, MCV, LCV):
   return board, False
 
 def forward_check(row, col, value, board):
+  """
+  forward check if there is only one possible value for
+  the relevant position, if so, assigned the value. 
+  if there is no possible value for empty position, then
+  return false.
+  """
   BoardArray = board.CurrentGameBoard
   size = len(BoardArray)
   subsquare = int(math.sqrt(size))
@@ -154,6 +187,7 @@ def forward_check(row, col, value, board):
 
   changed = 1
   
+  #while there has changed in this loop, then loop again, until stable.
   while changed == 1:
     changed = 0
     for i in range(size):
@@ -161,8 +195,9 @@ def forward_check(row, col, value, board):
         if (len(pValue[i][j]) == 1  and BoardArray[i][j] == 0):
           changed = 1
           BoardArray[i][j] = pValue[i][j][0]
+          #update possible value table after make any changed
           pvTableUpdate(i, j, board, pValue[i][j][0])
-          board.counter += 1
+          count()
         elif (len(pValue[i][j]) == 0 and BoardArray[i][j] == 0):
           return False
 
@@ -171,17 +206,24 @@ def forward_check(row, col, value, board):
     
 
 def nextEmptyPosition(board, MRV, MCV):
+  """
+  Find a empty position by random, MRV or MCV.
+  """
   BoardArray = board.CurrentGameBoard
   size = len(BoardArray)
   subsquare = int(math.sqrt(size))
 
   min_remain = 10
   prev_min = min_remain
+  
+  # just return the first found empty position
   if(MCV==False and MRV == False):
     for row in range(size):
       for col in range(size):
         if BoardArray[row][col]==0:
           return row, col
+
+  # use MRV to find the empty position
   elif(MRV == True):
     row = 0
     col = 0
@@ -194,6 +236,7 @@ def nextEmptyPosition(board, MRV, MCV):
             prev_min = min_remain
             min_remain = len(possible_value(i,j, board, False))
 
+  # when there are tied on MRV, then use MCV to find better value.
   if prev_min == min_remain:
     if MCV == True:
       row = 0
@@ -210,6 +253,10 @@ def nextEmptyPosition(board, MRV, MCV):
   return row, col
 
 def degree(row, col, board):
+  """
+  Calculate the degree of the specific position.
+  using for MCV 
+  """
   BoardArray = board.CurrentGameBoard
   size = len(BoardArray)
   subsquare = int(math.sqrt(size))
@@ -236,6 +283,9 @@ def possible_value(row, col, board, LCV):
 
 
 def possible_valueHelper(row, col, board, LCV):
+  """
+  This will used for calculate possible value for specific place
+  """
   BoardArray = board.CurrentGameBoard
   size = len(BoardArray)
   subsquare = int(math.sqrt(size))
@@ -267,6 +317,9 @@ def possible_valueHelper(row, col, board, LCV):
   return result
 
 def pvTableUpdate(row, col, board, del_value):
+  """
+  update the possible value table
+  """
   BoardArray = board.CurrentGameBoard
   size = len(BoardArray)
   subsquare = int(math.sqrt(size))
@@ -287,15 +340,11 @@ def pvTableUpdate(row, col, board, del_value):
       if(del_value in pValue[SquareRow*subsquare+i][SquareCol*subsquare+j]):
         pValue[SquareRow*subsquare+i][SquareCol*subsquare+j].remove(del_value)
 
-  
-  
-
-
-
-
-
 
 def re_order_value(row, col, board, l):
+  """
+  do re-order the list to find the LCV.
+  """
   if len(l) == 0:
     return
   index_list = []

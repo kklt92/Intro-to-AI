@@ -279,6 +279,8 @@ def degree(row, col, board):
   return count
 
 def possible_value(row, col, board, LCV):
+  if LCV == True:
+    re_order_value(row, col, board, board.PossibleValue[row][col])
   return board.PossibleValue[row][col]
 
 
